@@ -247,14 +247,32 @@ export const NotificationModal: React.FC<Props> = ({ open, onClose, onReminderCh
             </span>
           </div>
 
-          <button
-            type="button"
-            className={`btn ${settings.enabled ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={handleToggle}
-            disabled={!caps.supported || caps.permission === 'denied'}
-          >
-            {settings.enabled ? 'Enabled' : 'Disabled'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span
+              style={{
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                color: settings.enabled ? 'var(--accent-blue)' : 'var(--text-muted)',
+                letterSpacing: '0.04em',
+                userSelect: 'none',
+              }}
+            >
+              {settings.enabled ? 'ON' : 'OFF'}
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={settings.enabled}
+              className={`modern-toggle-switch ${settings.enabled ? 'is-checked' : ''}`}
+              onClick={handleToggle}
+              disabled={!caps.supported || caps.permission === 'denied'}
+              aria-label="Toggle daily morning weather reminder"
+            >
+              <span className="modern-toggle-track">
+                <span className="modern-toggle-thumb" />
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Custom In-Card Time Picker (No ugly native browser popup!) */}

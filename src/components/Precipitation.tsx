@@ -19,7 +19,7 @@ interface Drop {
   phase: number;
 }
 
-const DENSITY: Partial<Record<Condition, number>> = { drizzle: 0.35, rain: 1, storm: 1.5, snow: 0.75 };
+const DENSITY: Partial<Record<Condition, number>> = { drizzle: 0.35, rain: 1, storm: 1.5, snow: 1.4 };
 
 /** Rain / drizzle / snow particles with depth, wind slant and storm lightning. */
 export function Precipitation({ condition, theme, windKmh, reduced }: Props) {
@@ -55,8 +55,8 @@ export function Precipitation({ condition, theme, windKmh, reduced }: Props) {
       el.width = w * dpr;
       el.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const target = Math.round(((w * h) / 9000) * (DENSITY[live.current.condition] ?? 0));
-      drops = Array.from({ length: Math.min(target, 420) }, () => spawn(true));
+      const target = Math.round(((w * h) / 7500) * (DENSITY[live.current.condition] ?? 0));
+      drops = Array.from({ length: Math.min(target, 480) }, () => spawn(true));
     };
     resize();
     window.addEventListener('resize', resize);
@@ -78,16 +78,37 @@ export function Precipitation({ condition, theme, windKmh, reduced }: Props) {
       ctx.lineCap = 'round';
       for (const d of drops) {
         if (snow) {
-          const speed = 26 + d.z * 60;
+          const speed = 32 + d.z * 70;
           d.y += speed * dt;
-          d.phase += dt * (0.8 + d.z);
-          d.x += (Math.sin(d.phase) * 18 + slant * 40) * dt;
-          const r = 0.8 + d.z * 2.6;
-          ctx.globalAlpha = 0.35 + d.z * 0.55;
-          ctx.fillStyle = dark ? '#e8eeff' : '#ffffff';
+          d.phase += dt * (0.85 + d.z * 0.7);
+          // Compound sinusoidal drift mimicking wind flutter
+          d.x += (Math.sin(d.phase) * 22 + Math.sin(d.phase * 2.2) * 7 + slant * 45) * dt;
+          const r = 1.1 + d.z * 3.2;
+
+          // Atmospheric snowfall rendering
+          const alpha = 0.45 + d.z * 0.52;
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = dark ? '#eef5ff' : '#ffffff';
+
+          // Fluffy outer halo for closer snowflakes
+          if (d.z > 0.55) {
+            ctx.globalAlpha = alpha * 0.32;
+            ctx.beginPath();
+            ctx.arc(d.x, d.y, r * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = alpha;
+          }
+
           ctx.beginPath();
           ctx.arc(d.x, d.y, r, 0, Math.PI * 2);
           ctx.fill();
+
+          // In light mode, add a crisp frosted edge so snowflakes stand out boldly against light skies
+          if (!dark) {
+            ctx.strokeStyle = `rgba(145, 175, 215, ${0.28 + d.z * 0.35})`;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
         } else {
           const speed = (c === 'drizzle' ? 520 : 900) + d.z * 700;
           d.y += speed * dt;

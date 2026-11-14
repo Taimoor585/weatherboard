@@ -13,19 +13,19 @@ export const MoonAstronomyCard: React.FC<Props> = ({ moon, pressure }) => {
 
   // Pressure tendency classification
   const isHigh = pressure >= 1013;
-  const pressureRating = pressure >= 1022 ? 'Very High (Clear Skies)' : pressure >= 1013 ? 'Normal (Settled)' : pressure >= 1005 ? 'Low (Unsettled)' : 'Very Low (Storm Alert)';
+  const pressureRating = pressure >= 1022 ? 'High · Clear skies' : pressure >= 1013 ? 'Normal · Settled' : pressure >= 1005 ? 'Low · Unsettled' : 'Low · Storm alert';
 
   // Pressure gauge percentage (970 hPa = 0%, 1050 hPa = 100%)
   const gaugePct = Math.max(0, Math.min(100, ((pressure - 970) / 80) * 100));
 
   return (
-    <div className="card astronomy-card" role="region" aria-label="Astronomy & Barometer">
+    <div className="card astronomy-card" role="region" aria-label="Moon Phase & Pressure">
       <div className="section-title-wrap">
         <h3 className="section-title">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
           </svg>
-          Lunar Phase & Barometer
+          Moon Phase & Pressure
         </h3>
         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{illum}% illumination</span>
       </div>
@@ -70,7 +70,7 @@ export const MoonAstronomyCard: React.FC<Props> = ({ moon, pressure }) => {
         <div className="barometer-box">
           <div className="barometer-header">
             <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
-              Barometric Gauge
+              Atmospheric Pressure
             </span>
             <span style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)' }}>{pressure} hPa</span>
           </div>

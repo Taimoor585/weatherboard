@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AtmosphericLoader } from './components/AtmosphericLoader';
 import { CitySearch } from './components/CitySearch';
 import { CurrentWeatherCard } from './components/CurrentWeatherCard';
@@ -20,7 +20,7 @@ import { useTheme } from './hooks/useTheme';
 import { useUnits } from './hooks/useUnits';
 import { useWeather } from './hooks/useWeather';
 import { fmtDay } from './lib/format';
-import { readReminder } from './lib/notifications';
+import { idbGet, idbSet } from './lib/idb';
 import { KEYS, storage } from './lib/storage';
 import type { City } from './lib/types';
 
@@ -42,10 +42,30 @@ export const App: React.FC = () => {
   const online = useOnline();
   const { canInstall, install } = useInstallPrompt();
 
-  // Current City
+  // Initial load atmospheric reveal state
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // Current City with reliable persistence (localStorage + IndexedDB)
   const [city, setCity] = useState<City>(() => {
     return storage.get<City>(KEYS.lastCity, DEFAULT_CITY);
   });
+
+  // Check IndexedDB if localStorage was not populated or in private browsing
+  useEffect(() => {
+    void idbGet<City>('lastCity').then((stored) => {
+      if (stored && stored.id && stored.id !== city.id) {
+        setCity(stored);
+      }
+    });
+  }, []);
+
+  // Show intro atmospheric loader briefly on page load / full reload
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialLoading(false);
+    }, 850);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Weather query hook
   const { status, data, error, fromCache, refreshing, refresh, retry } = useWeather(city, online);
@@ -59,12 +79,29 @@ export const App: React.FC = () => {
 
   // Modals & Notifications
   const [notifOpen, setNotifOpen] = useState(false);
-  const [reminderActive, setReminderActive] = useState(() => readReminder().enabled);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2800);
+  };
+
+  const [switchingCity, setSwitchingCity] = useState(false);
+
+  const handleCityChange = (newCity: City) => {
+    if (newCity.id === city.id) return;
+    setSelectedDayIndex(0);
+    setSwitchingCity(true);
+
+    // Realistic, premium 260ms transition so city changes feel authentic & deliberate
+    setTimeout(() => {
+      setCity(newCity);
+      storage.set(KEYS.lastCity, newCity);
+      void idbSet('lastCity', newCity);
+      setTimeout(() => {
+        setSwitchingCity(false);
+      }, 60);
+    }, 260);
   };
 
   const handleToggleFavourite = (targetCity: City) => {
@@ -86,7 +123,7 @@ export const App: React.FC = () => {
   const handleManualRefresh = () => {
     if (manualRefreshing) return;
     setManualRefreshing(true);
-    showToast('Telemetry updated');
+    showToast('Weather updated');
     refresh();
     setTimeout(() => {
       setManualRefreshing(false);
@@ -129,7 +166,6 @@ export const App: React.FC = () => {
           onRefresh={handleManualRefresh}
           refreshing={manualRefreshing || refreshing}
           onOpenNotifications={() => setNotifOpen(true)}
-          reminderEnabled={reminderActive}
           canInstall={canInstall}
           onInstall={() => void install()}
         />
@@ -137,10 +173,7 @@ export const App: React.FC = () => {
         <main className="container" role="main">
           {/* City Autocomplete Search Bar */}
           <CitySearch
-            onSelectCity={(c) => {
-              setSelectedDayIndex(0);
-              setCity(c);
-            }}
+            onSelectCity={handleCityChange}
             currentCity={city}
           />
 
@@ -148,12 +181,10 @@ export const App: React.FC = () => {
           <FavouriteCities
             favourites={favourites}
             currentCity={city}
-            onSelectCity={(c) => {
-              setSelectedDayIndex(0);
-              setCity(c);
-            }}
+            onSelectCity={handleCityChange}
             onRemoveCity={removeFav}
             persistent={persistent}
+            loading={status === 'loading' || refreshing || switchingCity}
           />
 
           {/* Offline / Cache Banner */}
@@ -164,15 +195,19 @@ export const App: React.FC = () => {
             onRefresh={handleManualRefresh}
           />
 
-          {/* Full-Page Atmospheric Loader on initial load or city transition */}
-          {status === 'loading' && !data && <AtmosphericLoader cityName={city?.name} />}
+          {/* Full-Page Atmospheric Loader on initial load, refresh, or city transition */}
+          {(initialLoading || (status === 'loading' && !data)) && (
+            <AtmosphericLoader cityName={city?.name} />
+          )}
 
           {/* Error State */}
-          {status === 'error' && !data && <ErrorCard error={error} onRetry={retry} />}
+          {!initialLoading && status === 'error' && !data && (
+            <ErrorCard error={error} onRetry={retry} />
+          )}
 
           {/* Weather Dashboard Core Display */}
-          {data && (
-            <div className="dashboard-fullscreen-layout">
+          {!initialLoading && data && (
+            <div className={`dashboard-fullscreen-layout ${switchingCity ? 'is-switching' : ''}`}>
               {/* TOP ROW: Hero Current Weather & 5-Day Forecast side-by-side */}
               <div className="layout-top-split">
                 <CurrentWeatherCard
@@ -200,22 +235,21 @@ export const App: React.FC = () => {
                 dayLabel={selectedDayLabel}
               />
 
-              {/* BOTTOM ROW: Detailed Weather Metrics, Sun Arc & Lunar Barometer */}
-              <div className="layout-bottom-split">
-                <MetricsGrid data={data} units={units} />
+              {/* DETAILED WEATHER METRICS: Full-Width 3-Column Grid */}
+              <MetricsGrid data={data} units={units} />
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
-                  <SunArcCard
-                    sunrise={data.today.sunrise}
-                    sunset={data.today.sunset}
-                    utcOffsetSec={data.utcOffsetSec}
-                  />
+              {/* CELESTIAL & ATMOSPHERIC ROW: Daylight Sun Arc & Moon Phase side-by-side */}
+              <div className="layout-celestial-row">
+                <SunArcCard
+                  sunrise={data.today.sunrise}
+                  sunset={data.today.sunset}
+                  utcOffsetSec={data.utcOffsetSec}
+                />
 
-                  <MoonAstronomyCard
-                    moon={data.moon}
-                    pressure={data.current.pressure}
-                  />
-                </div>
+                <MoonAstronomyCard
+                  moon={data.moon}
+                  pressure={data.current.pressure}
+                />
               </div>
             </div>
           )}
@@ -225,10 +259,10 @@ export const App: React.FC = () => {
           <div className="container">
             <div className="footer-inner">
               <div style={{ fontWeight: 500, letterSpacing: '-0.01em' }}>
-                WeatherBoard · Precision Meteorological Telemetry · Continuous Localized Forecasting
+                WeatherBoard · Live Weather Dashboard
               </div>
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.785rem' }}>
-                All systems nominal
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                Accurate local forecasts · Offline ready
               </div>
             </div>
           </div>
@@ -238,7 +272,6 @@ export const App: React.FC = () => {
         <NotificationModal
           open={notifOpen}
           onClose={() => setNotifOpen(false)}
-          onReminderChange={(en) => setReminderActive(en)}
         />
 
         {/* Centered Micro-interaction Toast Banner */}

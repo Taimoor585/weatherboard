@@ -9,6 +9,7 @@ interface Props {
   onSelectCity: (city: City) => void;
   onRemoveCity: (city: City) => void;
   persistent: boolean;
+  loading?: boolean;
 }
 
 export const FavouriteCities: React.FC<Props> = ({
@@ -17,6 +18,7 @@ export const FavouriteCities: React.FC<Props> = ({
   onSelectCity,
   onRemoveCity,
   persistent,
+  loading = false,
 }) => {
   const [cityToRemove, setCityToRemove] = useState<City | null>(null);
 
@@ -46,7 +48,7 @@ export const FavouriteCities: React.FC<Props> = ({
           return (
             <div
               key={city.id}
-              className={`fav-pill ${isActive ? 'is-active' : ''}`}
+              className={`fav-pill ${isActive ? 'is-active' : ''} ${isActive && loading ? 'is-loading' : ''}`}
               onClick={() => onSelectCity(city)}
               role="button"
               tabIndex={0}
@@ -59,6 +61,9 @@ export const FavouriteCities: React.FC<Props> = ({
               aria-label={`View weather for ${city.name}`}
             >
               <span>{city.name}</span>
+              {isActive && loading && (
+                <span className="fav-pill-spinner" aria-hidden="true" title="Updating weather..." />
+              )}
               <button
                 type="button"
                 className="fav-remove-btn"

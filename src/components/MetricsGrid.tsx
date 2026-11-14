@@ -36,137 +36,190 @@ export const MetricsGrid: React.FC<Props> = ({ data, units }) => {
   const aqiInfo = air ? aqiLevel(air.usAqi) : null;
 
   return (
-    <div className="metrics-grid" role="region" aria-label="Detailed Weather Metrics">
-      {/* Wind */}
-      <div className="metric-tile">
-        <div className="metric-header">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" />
-            <path d="M9.6 4.6A2 2 0 1 1 11 8H2" />
-            <path d="M12.6 19.4A2 2 0 1 0 14 16H2" />
-          </svg>
-          <span>Wind</span>
+    <div className="metrics-wrapper" role="region" aria-label="Detailed Weather Metrics">
+      {/* Group 1: Primary Weather Essentials */}
+      <div className="metrics-group">
+        <div className="metrics-group-header">
+          <span className="metrics-group-title">Primary Conditions</span>
+          <span className="metrics-group-hint">Key daily factors</span>
         </div>
-        <div className="metric-value">
-          <AnimatedNumber value={windInfo.value} /> <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{windInfo.unit}</span>
-        </div>
-        <div className="metric-sub">
-          {compassDir} ({current.windDeg}°) · {beaufortDesc}
-          {gustInfo && ` · Gusts ${gustInfo.value} ${gustInfo.unit}`}
-        </div>
-      </div>
-
-      {/* Humidity */}
-      <div className="metric-tile">
-        <div className="metric-header">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-          </svg>
-          <span>Humidity</span>
-        </div>
-        <div className="metric-value">
-          <AnimatedNumber value={current.humidity} />%
-        </div>
-        <div className="metric-sub">
-          {current.dewPoint != null ? `Dew point: ${temp(current.dewPoint, units)}°` : 'Relative humidity'}
-        </div>
-      </div>
-
-      {/* UV Index */}
-      <div className="metric-tile">
-        <div className="metric-header">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="5" />
-            <line x1="12" y1="1" x2="12" y2="3" />
-            <line x1="12" y1="21" x2="12" y2="23" />
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-            <line x1="1" y1="12" x2="3" y2="12" />
-            <line x1="21" y1="12" x2="23" y2="12" />
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-          </svg>
-          <span>UV Index</span>
-        </div>
-        <div className="metric-value">
-          {current.uv != null ? <AnimatedNumber value={current.uv} format={(n) => n.toFixed(1)} /> : '—'}
-        </div>
-        <div className="metric-sub">{uvLevel(current.uv)}</div>
-      </div>
-
-      {/* Pressure */}
-      <div className="metric-tile">
-        <div className="metric-header">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="m14 14-4-4" />
-            <path d="M12 6v2" />
-          </svg>
-          <span>Pressure</span>
-        </div>
-        <div className="metric-value">
-          <AnimatedNumber value={current.pressure} /> <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>hPa</span>
-        </div>
-        <div className="metric-sub">
-          {current.pressure > 1013 ? 'High pressure (Fair)' : 'Low pressure (Unsettled)'}
-        </div>
-      </div>
-
-      {/* Visibility */}
-      <div className="metric-tile">
-        <div className="metric-header">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
-          <span>Visibility</span>
-        </div>
-        <div className="metric-value">
-          {current.visibility != null ? (
-            <>
-              {distance(current.visibility, units).value}{' '}
-              <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{distance(current.visibility, units).unit}</span>
-            </>
-          ) : (
-            'Clear'
-          )}
-        </div>
-        <div className="metric-sub">
-          {current.visibility && current.visibility >= 10000 ? 'Perfect clarity' : 'Reduced visibility'}
-        </div>
-      </div>
-
-      {/* Cloud Cover or Air Quality */}
-      <div className="metric-tile">
-        <div className="metric-header">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-          </svg>
-          <span>{air ? 'Air Quality' : 'Cloud Cover'}</span>
-        </div>
-        {air ? (
-          <>
-            <div className="metric-value" style={{ color: aqiInfo?.color }}>
-              AQI <AnimatedNumber value={air.usAqi} />
+        <div className="metrics-grid">
+          {/* Wind */}
+          <div className="metric-tile">
+            <div className="metric-header">
+              <div className="metric-title-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" />
+                  <path d="M9.6 4.6A2 2 0 1 1 11 8H2" />
+                  <path d="M12.6 19.4A2 2 0 1 0 14 16H2" />
+                </svg>
+                <span>Wind</span>
+              </div>
+              <span className="metric-badge">{compassDir}</span>
+            </div>
+            <div className="metric-value">
+              <AnimatedNumber value={windInfo.value} /> <span className="metric-unit">{windInfo.unit}</span>
             </div>
             <div className="metric-sub">
-              {aqiInfo?.label} · PM2.5: {air.pm25.toFixed(1)} µg/m³
+              {beaufortDesc}
+              {gustInfo && <span className="metric-sub-highlight"> · Gusts {gustInfo.value} {gustInfo.unit}</span>}
             </div>
-          </>
-        ) : (
-          <>
+          </div>
+
+          {/* Humidity */}
+          <div className="metric-tile">
+            <div className="metric-header">
+              <div className="metric-title-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                </svg>
+                <span>Humidity</span>
+              </div>
+              <span className="metric-badge">
+                {current.humidity < 40 ? 'Dry' : current.humidity > 70 ? 'Humid' : 'Comfortable'}
+              </span>
+            </div>
             <div className="metric-value">
-              {current.cloudCover != null ? (
+              <AnimatedNumber value={current.humidity} /><span className="metric-unit">%</span>
+            </div>
+            <div className="metric-sub">
+              {current.dewPoint != null ? `Dew point: ${temp(current.dewPoint, units)}°` : 'Relative humidity'}
+            </div>
+          </div>
+
+          {/* UV Index */}
+          <div className="metric-tile">
+            <div className="metric-header">
+              <div className="metric-title-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+                <span>UV Index</span>
+              </div>
+              <span className="metric-badge is-uv">{uvLevel(current.uv)}</span>
+            </div>
+            <div className="metric-value">
+              {current.uv != null ? <AnimatedNumber value={current.uv} format={(n) => n.toFixed(1)} /> : '—'}
+            </div>
+            <div className="metric-sub">
+              {current.uv != null && current.uv >= 6 ? 'Sun protection advised' : 'Low risk from sun'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Group 2: Atmospheric & Environmental Context */}
+      <div className="metrics-group">
+        <div className="metrics-group-header">
+          <span className="metrics-group-title">Atmospheric Environment</span>
+          <span className="metrics-group-hint">Air & visibility</span>
+        </div>
+        <div className="metrics-grid">
+          {/* Visibility */}
+          <div className="metric-tile">
+            <div className="metric-header">
+              <div className="metric-title-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span>Visibility</span>
+              </div>
+              <span className="metric-badge">
+                {current.visibility && current.visibility >= 10000 ? 'Clear' : 'Moderate'}
+              </span>
+            </div>
+            <div className="metric-value">
+              {current.visibility != null ? (
                 <>
-                  <AnimatedNumber value={current.cloudCover} />%
+                  {distance(current.visibility, units).value}{' '}
+                  <span className="metric-unit">{distance(current.visibility, units).unit}</span>
                 </>
               ) : (
-                '—'
+                'Clear'
               )}
             </div>
-            <div className="metric-sub">Sky opacity</div>
-          </>
-        )}
+            <div className="metric-sub">
+              {current.visibility && current.visibility >= 10000 ? 'Good optical clarity' : 'Slight haze in air'}
+            </div>
+          </div>
+
+          {/* Pressure */}
+          <div className="metric-tile">
+            <div className="metric-header">
+              <div className="metric-title-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="m14 14-4-4" />
+                  <path d="M12 6v2" />
+                </svg>
+                <span>Pressure</span>
+              </div>
+              <span className="metric-badge">
+                {current.pressure >= 1013 ? 'Steady' : 'Low'}
+              </span>
+            </div>
+            <div className="metric-value">
+              <AnimatedNumber value={current.pressure} /> <span className="metric-unit">hPa</span>
+            </div>
+            <div className="metric-sub">
+              {current.pressure >= 1013 ? 'Fair & settled weather' : 'Unsettled weather system'}
+            </div>
+          </div>
+
+          {/* Air Quality or Cloud Cover */}
+          <div className="metric-tile">
+            <div className="metric-header">
+              <div className="metric-title-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+                </svg>
+                <span>{air ? 'Air Quality' : 'Cloud Cover'}</span>
+              </div>
+              {air ? (
+                <span className="metric-badge" style={{ color: aqiInfo?.color, borderColor: aqiInfo?.color }}>
+                  {aqiInfo?.label}
+                </span>
+              ) : (
+                <span className="metric-badge">
+                  {current.cloudCover == null || current.cloudCover < 20 ? 'Clear' : current.cloudCover < 60 ? 'Partly' : 'Overcast'}
+                </span>
+              )}
+            </div>
+            {air ? (
+              <>
+                <div className="metric-value" style={{ color: aqiInfo?.color }}>
+                  <span className="metric-unit" style={{ fontSize: '1rem', color: 'inherit', fontWeight: 600 }}>AQI </span>
+                  <AnimatedNumber value={air.usAqi} />
+                </div>
+                <div className="metric-sub">
+                  PM2.5: {air.pm25.toFixed(1)} µg/m³
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="metric-value">
+                  {current.cloudCover != null ? (
+                    <>
+                      <AnimatedNumber value={current.cloudCover} /><span className="metric-unit">%</span>
+                    </>
+                  ) : (
+                    '—'
+                  )}
+                </div>
+                <div className="metric-sub">Sky cloud coverage</div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

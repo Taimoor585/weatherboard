@@ -78,8 +78,11 @@ export const DailyForecast: React.FC<Props> = ({
                 <span className="daily-day-date">{dayDate}</span>
               </div>
 
-              <div className="daily-icon-wrap" title={day.description}>
-                <WeatherIcon condition={day.condition} size={34} still={false} />
+              <div className="daily-weather-col">
+                <div className="daily-icon-wrap" aria-hidden="true">
+                  <WeatherIcon condition={day.condition} size={30} still={false} />
+                </div>
+                <span className="daily-condition-text">{day.description}</span>
               </div>
 
               <div className="daily-bar-container" aria-hidden="true">
@@ -95,10 +98,11 @@ export const DailyForecast: React.FC<Props> = ({
               </div>
 
               <div className="daily-minmax">
-                <span className="daily-lo">
+                <span className="daily-lo" title={`Low: ${minT}°`}>
                   <AnimatedNumber value={minT} />°
                 </span>
-                <span className="daily-hi">
+                <span className="daily-divider">/</span>
+                <span className="daily-hi" title={`High: ${maxT}°`}>
                   <AnimatedNumber value={maxT} />°
                 </span>
               </div>

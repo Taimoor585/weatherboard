@@ -88,21 +88,23 @@ export const HourlyForecast: React.FC<Props> = ({ hourly, utcOffsetSec, units, d
 
   return (
     <div className="card hourly-section full-width-hourly" role="region" aria-label="Hourly Forecast Timeline">
-      <div className="section-title-wrap">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div className="section-title-wrap hourly-header-wrap">
+        <div className="hourly-title-group">
           <h3 className="section-title" style={{ fontSize: '1.1rem' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
-            24-Hour Forecast Timeline
+            <span>24-Hour Forecast Timeline</span>
           </h3>
-          <span className="hourly-day-badge">{dayLabel}</span>
-          <span className="hourly-count-pill">{hourly.length} Hours</span>
+          <div className="hourly-badges-wrap">
+            <span className="hourly-day-badge">{dayLabel}</span>
+            <span className="hourly-count-pill">{hourly.length} Hours</span>
+          </div>
         </div>
 
         {/* View Mode Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="hourly-header-controls">
           <div className="view-mode-tabs">
             <button
               type="button"

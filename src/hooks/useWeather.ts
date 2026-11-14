@@ -5,7 +5,7 @@ import { AppError, type City, type WeatherData } from '../lib/types';
 import { fetchWeather } from '../lib/weather';
 
 type Cache = Record<string, WeatherData>;
-const CACHE_LIMIT = 6;
+const CACHE_LIMIT = 12;
 const REFRESH_MS = 10 * 60 * 1000;
 
 function readCache(): Cache {
@@ -45,11 +45,29 @@ export function useWeather(city: City | null, online: boolean) {
       ctrl.current = ac;
       const cached = readCache()[target.id];
 
-      setState((s) =>
-        mode === 'refresh'
-          ? { ...s, refreshing: true, error: null }
-          : { status: 'loading', data: s.data, error: null, fromCache: false, refreshing: false },
-      );
+      if (mode === 'switch') {
+        if (cached) {
+          // Render cached data cleanly without triggering offline alert banners
+          setState({
+            status: 'success',
+            data: cached,
+            error: null,
+            fromCache: false,
+            refreshing: true, // background silent revalidation
+          });
+        } else {
+          // Cold switch: immediately clear old city data so user gets instant loading feedback!
+          setState({
+            status: 'loading',
+            data: null,
+            error: null,
+            fromCache: false,
+            refreshing: false,
+          });
+        }
+      } else {
+        setState((s) => ({ ...s, refreshing: true, error: null }));
+      }
 
       try {
         const data = await fetchWeather(target, ac.signal);

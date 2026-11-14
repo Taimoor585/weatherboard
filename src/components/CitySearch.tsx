@@ -15,12 +15,14 @@ export const CitySearch: React.FC<Props> = ({ onSelectCity }) => {
   const [locating, setLocating] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [statusNotice, setStatusNotice] = useState<{ message: string; type: 'info' | 'error' } | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortCtrl = useRef<AbortController | null>(null);
   const debounceTimer = useRef<number | null>(null);
+  const searchSeq = useRef<number>(0);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -37,7 +39,7 @@ export const CitySearch: React.FC<Props> = ({ onSelectCity }) => {
     };
   }, []);
 
-  // Live autocomplete search with 300ms debounce
+  // Live autocomplete search with 300ms debounce and race-condition prevention
   const performSearch = useCallback(async (val: string) => {
     const q = val.trim();
     if (!q || q.length < 2) {
@@ -51,29 +53,27 @@ export const CitySearch: React.FC<Props> = ({ onSelectCity }) => {
     const ac = new AbortController();
     abortCtrl.current = ac;
 
+    const currentSeq = ++searchSeq.current;
     setLoading(true);
-    setErrorMessage(null);
+    setSearchError(null);
+    setOpen(true);
 
     try {
       const res: SearchResult = await searchCities(q, ac.signal);
-      if (ac.signal.aborted) return;
+      if (ac.signal.aborted || currentSeq !== searchSeq.current) return;
       setResults(res.cities);
       setSource(res.source);
-      setOpen(true);
       setSelectedIndex(-1);
-      if (res.cities.length === 0) {
-        setErrorMessage(`No cities found matching "${q}". Check spelling or try a nearby major city.`);
-      }
     } catch (err) {
-      if (ac.signal.aborted) return;
-      if (err instanceof AppError) {
-        setErrorMessage(`${err.title} ${err.hint}`);
-      } else {
-        setErrorMessage('Unable to reach the city search service. Check your connection or try again.');
-      }
+      if (ac.signal.aborted || currentSeq !== searchSeq.current) return;
+      const msg =
+        err instanceof AppError
+          ? `${err.title} ${err.hint}`
+          : 'Unable to reach the search service. Check your connection or try again.';
+      setSearchError(msg);
       setResults([]);
     } finally {
-      if (!ac.signal.aborted) {
+      if (!ac.signal.aborted && currentSeq === searchSeq.current) {
         setLoading(false);
       }
     }
@@ -91,7 +91,8 @@ export const CitySearch: React.FC<Props> = ({ onSelectCity }) => {
     if (!val.trim()) {
       setResults([]);
       setOpen(false);
-      setErrorMessage(null);
+      setStatusNotice(null);
+      setSearchError(null);
       return;
     }
 
@@ -100,21 +101,119 @@ export const CitySearch: React.FC<Props> = ({ onSelectCity }) => {
     }, 300);
   };
 
-  // Form submission (Enter key or search click)
+  const handleSelect = (city: City) => {
+    setQuery(`${city.name}${city.country ? ', ' + city.country : ''}`);
+    setOpen(false);
+    setResults([]);
+    setStatusNotice(null);
+    setSearchError(null);
+    onSelectCity(city);
+  };
+
+  // Keyboard navigation & selection
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!open) {
+      if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && (results.length > 0 || query.trim().length === 0)) {
+        setOpen(true);
+        setSelectedIndex(0);
+        e.preventDefault();
+      }
+      return;
+    }
+
+    const totalSelectable = results.length + 1; // +1 for the "Use my location" button
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev < totalSelectable - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : totalSelectable - 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex === 0) {
+        handleGeolocate();
+      } else if (selectedIndex > 0 && selectedIndex - 1 < results.length) {
+        handleSelect(results[selectedIndex - 1]);
+      } else if (results.length > 0) {
+        handleSelect(results[0]);
+      } else if (query.trim()) {
+        void performSearch(query.trim());
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+    }
+  };
+
+  // "Use my location" GPS feature with graceful permission handling
+  const handleGeolocate = () => {
+    if (!navigator.geolocation) {
+      setStatusNotice({ message: 'Geolocation is not supported by your browser.', type: 'info' });
+      return;
+    }
+
+    setLocating(true);
+    setStatusNotice(null);
+    setOpen(false);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const city = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          handleSelect(city);
+        } catch {
+          setStatusNotice({
+            message: "Couldn't retrieve city name for your coordinates. Please search for your city above.",
+            type: 'info',
+          });
+        } finally {
+          setLocating(false);
+        }
+      },
+      (err) => {
+        setLocating(false);
+        if (err.code === 1) {
+          setStatusNotice({
+            message: 'Location access was not granted. You can type any city name in the search bar above.',
+            type: 'info',
+          });
+        } else {
+          setStatusNotice({
+            message: 'Unable to determine your location. Please search for your city above.',
+            type: 'info',
+          });
+        }
+      },
+      { timeout: 8000 },
+    );
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    setResults([]);
+    setOpen(false);
+    setStatusNotice(null);
+    setSearchError(null);
+    inputRef.current?.focus();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const q = query.trim();
 
-    // If empty: take current location as requested!
     if (!q) {
-      setErrorMessage(null);
       handleGeolocate();
       return;
     }
 
-    // If an item is highlighted via arrow keys
-    if (open && selectedIndex >= 0 && selectedIndex < results.length) {
-      handleSelect(results[selectedIndex]);
+    if (open && selectedIndex === 0) {
+      handleGeolocate();
+      return;
+    }
+
+    if (open && selectedIndex > 0 && selectedIndex - 1 < results.length) {
+      handleSelect(results[selectedIndex - 1]);
       return;
     }
 
@@ -126,84 +225,11 @@ export const CitySearch: React.FC<Props> = ({ onSelectCity }) => {
     void performSearch(q);
   };
 
-  const handleSelect = (city: City) => {
-    setQuery(`${city.name}${city.country ? ', ' + city.country : ''}`);
-    setOpen(false);
-    setResults([]);
-    setErrorMessage(null);
-    onSelectCity(city);
-  };
-
-  // Keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!open) {
-      if (e.key === 'ArrowDown' && results.length > 0) {
-        setOpen(true);
-        setSelectedIndex(0);
-        e.preventDefault();
-      }
-      return;
-    }
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : results.length - 1));
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      setOpen(false);
-    }
-  };
-
-  // "Use my location" GPS feature
-  const handleGeolocate = () => {
-    if (!navigator.geolocation) {
-      setErrorMessage('Geolocation is not supported by this browser.');
-      return;
-    }
-
-    setLocating(true);
-    setErrorMessage(null);
-
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const city = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-          handleSelect(city);
-        } catch {
-          setErrorMessage("Couldn't retrieve city for your coordinates. Please enter a city name.");
-        } finally {
-          setLocating(false);
-        }
-      },
-      (err) => {
-        setLocating(false);
-        if (err.code === 1) {
-          // If denied, provide gentle non-blocking hint
-          setErrorMessage('Location permission was denied. Type your city or enable location in browser settings.');
-        } else {
-          setErrorMessage('Unable to determine location. Please search for your city.');
-        }
-      },
-      { timeout: 7000 },
-    );
-  };
-
-  const handleClear = () => {
-    setQuery('');
-    setResults([]);
-    setOpen(false);
-    setErrorMessage(null);
-    inputRef.current?.focus();
-  };
-
   return (
     <div className="search-section" ref={containerRef}>
       <div className="search-bar-wrap">
         <form className="search-form" onSubmit={handleSubmit} role="search" noValidate>
-          <div className={`search-input-shell ${errorMessage ? 'has-error' : ''}`}>
+          <div className={`search-input-shell ${statusNotice?.type === 'error' ? 'has-error' : ''}`}>
             <div className="search-icon-lead" aria-hidden="true">
               {loading ? (
                 <svg
@@ -241,7 +267,12 @@ export const CitySearch: React.FC<Props> = ({ onSelectCity }) => {
               value={query}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              placeholder="Search any city or leave blank to use your location..."
+              onFocus={() => {
+                if (query.trim().length >= 2 || results.length > 0) {
+                  setOpen(true);
+                }
+              }}
+              placeholder="Search city, state, or country..."
               autoComplete="off"
               spellCheck="false"
               role="combobox"
@@ -273,8 +304,8 @@ export const CitySearch: React.FC<Props> = ({ onSelectCity }) => {
                 className="btn btn-icon btn-ghost"
                 onClick={handleGeolocate}
                 disabled={locating}
-                aria-label="Detect current location"
-                title="Detect current location"
+                aria-label="Use my current location"
+                title="Use my current location"
               >
                 <svg
                   width="18"
@@ -294,51 +325,115 @@ export const CitySearch: React.FC<Props> = ({ onSelectCity }) => {
           </div>
         </form>
 
-        {errorMessage && (
-          <div className="search-error-msg" role="alert">
+        {statusNotice && (
+          <div className={`search-notice-msg ${statusNotice.type === 'error' ? 'is-error' : 'is-info'}`} role="status">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
-            <span style={{ flex: 1 }}>{errorMessage}</span>
+            <span style={{ flex: 1 }}>{statusNotice.message}</span>
             <button
               type="button"
-              onClick={() => setErrorMessage(null)}
-              style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: '2px 4px' }}
-              aria-label="Dismiss error"
+              onClick={() => setStatusNotice(null)}
+              className="search-notice-dismiss"
+              aria-label="Dismiss message"
             >
               ✕
             </button>
           </div>
         )}
 
-        {open && results.length > 0 && (
+        {open && (
           <div className="autocomplete-menu" id="city-autocomplete-list" role="listbox">
-            <div className="autocomplete-header">
-              <span>City Suggestions</span>
-              <span className="autocomplete-source-badge">{source}</span>
-            </div>
-            {results.map((city, idx) => (
-              <button
-                key={city.id}
-                type="button"
-                className={`autocomplete-item ${idx === selectedIndex ? 'is-selected' : ''}`}
-                onClick={() => handleSelect(city)}
-                role="option"
-                aria-selected={idx === selectedIndex}
-              >
-                <div>
-                  <span className="autocomplete-item-name">{city.name}</span>
-                  <span className="autocomplete-item-sub">
-                    {[city.region, city.country].filter(Boolean).join(', ')}
-                  </span>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
-                  <polyline points="9 18 15 12 9 6" />
+            {/* Quick Action: Use My Current Location */}
+            <button
+              type="button"
+              className={`autocomplete-location-row ${selectedIndex === 0 ? 'is-selected' : ''}`}
+              onClick={handleGeolocate}
+              role="option"
+              aria-selected={selectedIndex === 0}
+            >
+              <div className="autocomplete-location-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="3 11 22 2 13 21 11 13 3 11" />
                 </svg>
-              </button>
-            ))}
+              </div>
+              <div style={{ flex: 1, textAlign: 'left' }}>
+                <span className="autocomplete-location-title">Use my current location</span>
+                <span className="autocomplete-location-desc">Detect weather for where you are</span>
+              </div>
+              <span className="autocomplete-location-pill">GPS</span>
+            </button>
+
+            {loading && results.length === 0 && (
+              <div className="autocomplete-state-box">
+                <div className="search-state-spinner" />
+                <span>Searching cities...</span>
+              </div>
+            )}
+
+            {!loading && searchError && (
+              <div className="autocomplete-state-box">
+                <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>Search Busy</p>
+                <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                  {searchError}
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={{ fontSize: '0.8rem', padding: '4px 12px', border: '1px solid var(--border-subtle)' }}
+                  onClick={() => void performSearch(query)}
+                >
+                  Retry Search
+                </button>
+              </div>
+            )}
+
+            {!loading && !searchError && results.length === 0 && query.trim().length >= 2 && (
+              <div className="autocomplete-state-box">
+                <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>No cities found</p>
+                <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)' }}>
+                  Check your spelling or try searching for a nearby major city.
+                </p>
+              </div>
+            )}
+
+            {results.length > 0 && (
+              <>
+                <div className="autocomplete-header">
+                  <span>Suggestions ({results.length})</span>
+                  <span className="autocomplete-source-badge">{source}</span>
+                </div>
+                {results.map((city, idx) => {
+                  const itemIndex = idx + 1; // offset by 1 for GPS option
+                  const isSelected = selectedIndex === itemIndex;
+                  const locationDetail = [city.region, city.country].filter(Boolean).join(', ');
+
+                  return (
+                    <button
+                      key={city.id}
+                      type="button"
+                      className={`autocomplete-item ${isSelected ? 'is-selected' : ''}`}
+                      onClick={() => handleSelect(city)}
+                      role="option"
+                      aria-selected={isSelected}
+                    >
+                      <div className="autocomplete-item-text">
+                        <span className="autocomplete-item-name">{city.name}</span>
+                        <span className="autocomplete-item-sub">
+                          {locationDetail}
+                          {city.countryCode && <span className="autocomplete-country-code"> ({city.countryCode})</span>}
+                        </span>
+                      </div>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                  );
+                })}
+              </>
+            )}
           </div>
         )}
       </div>

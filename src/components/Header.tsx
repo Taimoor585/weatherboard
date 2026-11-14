@@ -10,7 +10,6 @@ interface Props {
   onRefresh: () => void;
   refreshing: boolean;
   onOpenNotifications: () => void;
-  reminderEnabled: boolean;
   canInstall: boolean;
   onInstall: () => void;
 }
@@ -23,7 +22,6 @@ export const Header: React.FC<Props> = ({
   onRefresh,
   refreshing,
   onOpenNotifications,
-  reminderEnabled,
   canInstall,
   onInstall,
 }) => {
@@ -33,8 +31,24 @@ export const Header: React.FC<Props> = ({
         <div className="header-inner">
           <a href="/" className="brand-link" aria-label="WeatherBoard Home">
             <div className="brand-logo-mark" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+              <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
+                <defs>
+                  <linearGradient id="brand-sky" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#5b8def" />
+                    <stop offset="100%" stopColor="#ffd9c2" />
+                  </linearGradient>
+                  <radialGradient id="brand-sun" cx="40%" cy="40%" r="60%">
+                    <stop offset="0%" stopColor="#ffe9a3" />
+                    <stop offset="100%" stopColor="#ff9142" />
+                  </radialGradient>
+                  <linearGradient id="brand-cloud" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="100%" stopColor="#d9e3f3" />
+                  </linearGradient>
+                </defs>
+                <rect width="64" height="64" rx="14" fill="url(#brand-sky)" />
+                <circle cx="38" cy="26" r="13" fill="url(#brand-sun)" />
+                <path d="M20 48h26a9 9 0 0 0 1.5-17.9A13 13 0 0 0 23.6 27.4 10.5 10.5 0 0 0 20 48z" fill="url(#brand-cloud)" />
               </svg>
             </div>
             <div className="brand-title-wrap">
@@ -92,27 +106,11 @@ export const Header: React.FC<Props> = ({
               onClick={onOpenNotifications}
               aria-label="Morning weather reminder settings"
               title="Morning weather reminder settings"
-              style={{ position: 'relative' }}
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
               </svg>
-              {reminderEnabled && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    width: '7px',
-                    height: '7px',
-                    borderRadius: '50%',
-                    backgroundColor: '#10b981',
-                    boxShadow: '0 0 0 2px var(--surface-base)',
-                  }}
-                  title="Daily reminder active"
-                />
-              )}
             </button>
 
             <button

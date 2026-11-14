@@ -23,7 +23,7 @@ const light: Table = {
   fog: { top: '#b2bcc9', horizon: '#cdd5df', bottom: '#dfe4eb', cloud: '#ecf0f5', shadow: '#a7b2bf', cover: 0.6, speed: 0.4, stars: 0, sun: '#f7ecde', sunStrength: 0.18 },
   drizzle: { top: '#94a5bd', horizon: '#bac7d7', bottom: '#d2dce8', cloud: '#e5ecf5', shadow: '#8a9bb3', cover: 0.7, speed: 1.0, stars: 0, sun: '#f7ecde', sunStrength: 0.14 },
   rain: { top: '#8295ae', horizon: '#a8b9cc', bottom: '#c5d2e0', cloud: '#dce5ef', shadow: '#7688a0', cover: 0.84, speed: 1.25, stars: 0, sun: '#ffffff', sunStrength: 0.06 },
-  snow: { top: '#a3b8d4', horizon: '#c8d7e8', bottom: '#e0eaf5', cloud: '#f5f8fc', shadow: '#9ab1cf', cover: 0.62, speed: 0.55, stars: 0, sun: '#ffffff', sunStrength: 0.2 },
+  snow: { top: '#8fa5c4', horizon: '#b5cae2', bottom: '#d4e2f0', cloud: '#ffffff', shadow: '#8fa8c7', cover: 0.82, speed: 0.6, stars: 0, sun: '#e2edfc', sunStrength: 0.1 },
   storm: { top: '#6a778e', horizon: '#8f9dae', bottom: '#b0bcc9', cloud: '#b8c3d0', shadow: '#505d73', cover: 0.92, speed: 1.7, stars: 0, sun: '#ffffff', sunStrength: 0 },
 };
 
@@ -34,7 +34,7 @@ const dark: Table = {
   fog: { top: '#0c1019', horizon: '#191e2b', bottom: '#232836', cloud: '#2d3344', shadow: '#151922', cover: 0.62, speed: 0.4, stars: 0.05, sun: '#8fa8ff', sunStrength: 0.08 },
   drizzle: { top: '#070b14', horizon: '#121a2b', bottom: '#1a2334', cloud: '#273147', shadow: '#0a0f19', cover: 0.74, speed: 1, stars: 0.05, sun: '#8fa8ff', sunStrength: 0.05 },
   rain: { top: '#060912', horizon: '#0f1727', bottom: '#172030', cloud: '#232c42', shadow: '#080c15', cover: 0.86, speed: 1.3, stars: 0, sun: '#8fa8ff', sunStrength: 0 },
-  snow: { top: '#0a1121', horizon: '#172238', bottom: '#253149', cloud: '#38456a', shadow: '#121a2c', cover: 0.62, speed: 0.55, stars: 0.2, sun: '#a9bcff', sunStrength: 0.15 },
+  snow: { top: '#050c18', horizon: '#0d182e', bottom: '#18243c', cloud: '#2a3a5e', shadow: '#080e1c', cover: 0.80, speed: 0.6, stars: 0.1, sun: '#a9bcff', sunStrength: 0.1 },
   storm: { top: '#03050b', horizon: '#0a0e1a', bottom: '#131929', cloud: '#1e2437', shadow: '#04060c', cover: 0.92, speed: 1.8, stars: 0, sun: '#8fa8ff', sunStrength: 0 },
 };
 

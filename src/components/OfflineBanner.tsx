@@ -8,8 +8,9 @@ interface Props {
   onRefresh?: () => void;
 }
 
-export const OfflineBanner: React.FC<Props> = ({ isOffline, fromCache, fetchedAt, onRefresh }) => {
-  if (!isOffline && !fromCache) return null;
+export const OfflineBanner: React.FC<Props> = ({ isOffline, fetchedAt, onRefresh }) => {
+  // Only display the banner when the user is genuinely offline
+  if (!isOffline) return null;
 
   return (
     <div className={`banner ${isOffline ? 'banner-offline' : 'banner-cached'}`} role="status">

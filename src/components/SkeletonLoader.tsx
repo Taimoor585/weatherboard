@@ -2,7 +2,7 @@ import React from 'react';
 
 export const SkeletonLoader: React.FC = () => {
   return (
-    <div className="dashboard-fullscreen-layout" aria-busy="true" aria-label="Loading weather telemetry">
+    <div className="dashboard-fullscreen-layout" aria-busy="true" aria-label="Loading weather forecast">
       {/* Top Split */}
       <div className="layout-top-split">
         {/* Hero Card Skeleton */}

@@ -71,6 +71,10 @@ export function WeatherIcon({ condition, isDay = true, size = 64, className = ''
           <stop offset="0%" stopColor="#7fb2ff" stopOpacity="0.2" />
           <stop offset="100%" stopColor="#4c86f0" />
         </linearGradient>
+        <linearGradient id={id('flake-core')} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#e0edff" />
+        </linearGradient>
         <linearGradient id={id('bolt')} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#fff3a8" />
           <stop offset="100%" stopColor="#ffb22e" />
@@ -149,16 +153,47 @@ export function WeatherIcon({ condition, isDay = true, size = 64, className = ''
           <circle key={x} cx={x} cy={47 + (i % 2) * 3} r="1.5" fill="#5b8ff2" className="wi-drop wi-drop--fine" style={{ animationDelay: `${i * 0.22}s` }} />
         ))}
 
-      {condition === 'snow' &&
-        [22, 32, 42].map((x, i) => (
-          <g key={x} className="wi-flake" style={{ animationDelay: `${i * 0.6}s` }}>
-            <g transform={`translate(${x} 48)`}>
-              {[0, 60, 120].map((r) => (
-                <line key={r} x1="0" y1="-3.2" x2="0" y2="3.2" stroke="#8fb2ee" strokeWidth="1.5" strokeLinecap="round" transform={`rotate(${r})`} />
-              ))}
+      {condition === 'snow' && (
+        <g className="wi-snow-wrap">
+          {/* Flake 1 - Left */}
+          <g className="wi-flake wi-flake--1">
+            <g transform="translate(23 45)">
+              <circle cx="0" cy="0" r="1.3" fill={`url(#${id('flake-core')})`} />
+              <line x1="0" y1="-3.4" x2="0" y2="3.4" stroke="#689ff3" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="-2.94" y1="-1.7" x2="2.94" y2="1.7" stroke="#689ff3" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="-2.94" y1="1.7" x2="2.94" y2="-1.7" stroke="#689ff3" strokeWidth="1.2" strokeLinecap="round" />
             </g>
           </g>
-        ))}
+          {/* Flake 2 - Center Main */}
+          <g className="wi-flake wi-flake--2">
+            <g transform="translate(33 46)">
+              <circle cx="0" cy="0" r="1.5" fill={`url(#${id('flake-core')})`} />
+              <line x1="0" y1="-4" x2="0" y2="4" stroke="#5291f0" strokeWidth="1.3" strokeLinecap="round" />
+              <line x1="-3.46" y1="-2" x2="3.46" y2="2" stroke="#5291f0" strokeWidth="1.3" strokeLinecap="round" />
+              <line x1="-3.46" y1="2" x2="3.46" y2="-2" stroke="#5291f0" strokeWidth="1.3" strokeLinecap="round" />
+              {/* Delicate crystalline accent tips */}
+              <circle cx="0" cy="-4" r="0.65" fill="#7eb3f8" />
+              <circle cx="0" cy="4" r="0.65" fill="#7eb3f8" />
+              <circle cx="-3.46" cy="-2" r="0.65" fill="#7eb3f8" />
+              <circle cx="3.46" cy="2" r="0.65" fill="#7eb3f8" />
+              <circle cx="-3.46" cy="2" r="0.65" fill="#7eb3f8" />
+              <circle cx="3.46" cy="-2" r="0.65" fill="#7eb3f8" />
+            </g>
+          </g>
+          {/* Flake 3 - Right */}
+          <g className="wi-flake wi-flake--3">
+            <g transform="translate(43 45)">
+              <circle cx="0" cy="0" r="1.3" fill={`url(#${id('flake-core')})`} />
+              <line x1="0" y1="-3.4" x2="0" y2="3.4" stroke="#689ff3" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="-2.94" y1="-1.7" x2="2.94" y2="1.7" stroke="#689ff3" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="-2.94" y1="1.7" x2="2.94" y2="-1.7" stroke="#689ff3" strokeWidth="1.2" strokeLinecap="round" />
+            </g>
+          </g>
+          {/* Soft floating snow flurries */}
+          <circle cx="28" cy="52" r="1.1" fill="#8cbcf8" className="wi-flake wi-flake--dot1" />
+          <circle cx="38" cy="51" r="1.1" fill="#8cbcf8" className="wi-flake wi-flake--dot2" />
+        </g>
+      )}
 
       {condition === 'storm' && (
         <path d="M34 36 L26 48 H32 L28.5 59 L39.5 44.5 H33.5 L37 36 Z" fill={`url(#${id('bolt')})`} className="wi-bolt" />

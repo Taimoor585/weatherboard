@@ -5,10 +5,10 @@ interface Props {
 }
 
 const MESSAGES = [
-  'Connecting to meteorological satellites...',
-  'Analyzing barometric pressure and wind vectors...',
-  'Calculating 24-hour solar trajectory & precipitation probability...',
-  'Synthesizing localized atmospheric telemetry...',
+  'Checking local weather conditions...',
+  'Loading 24-hour hourly forecast & precipitation...',
+  'Updating 5-day outlook & air quality...',
+  'Preparing your live dashboard...',
 ];
 
 export const AtmosphericLoader: React.FC<Props> = ({ cityName }) => {
