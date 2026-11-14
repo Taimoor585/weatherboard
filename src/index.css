@@ -204,8 +204,10 @@ html.vt-theme::view-transition-new(root) {
   position: relative;
   z-index: 2;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  padding-top: 68px;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -243,9 +245,12 @@ html.vt-theme::view-transition-new(root) {
    ───────────────────────────────────────────────────────────────────────────── */
 
 .header {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 40;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 100;
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   background: var(--surface-base);
@@ -274,6 +279,8 @@ html.vt-theme::view-transition-new(root) {
   border-radius: var(--radius-sm);
   transition: opacity 200ms ease;
   min-height: var(--touch-min);
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .brand-link:hover {
@@ -290,35 +297,60 @@ html.vt-theme::view-transition-new(root) {
   justify-content: center;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .brand-title-wrap {
   display: flex;
   align-items: baseline;
   gap: 6px;
+  min-width: 0;
 }
 
 .brand-title {
   font-weight: 650;
   letter-spacing: -0.03em;
-}
-
-.brand-badge {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  background: var(--accent-blue-soft);
-  color: var(--accent-blue);
-  border: 1px solid var(--border-subtle);
+  white-space: nowrap;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+}
+
+.header-action-btn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .header-inner {
+    gap: 6px;
+    padding: 0 2px;
+  }
+  .brand-link {
+    padding: 4px;
+    gap: 6px;
+  }
+  .brand-title {
+    font-size: 0.95rem;
+  }
+  .header-actions {
+    gap: 4px;
+  }
+  .header-action-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    padding: 0 !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .brand-title {
+    display: none;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -2126,9 +2158,57 @@ html.vt-theme::view-transition-new(root) {
   margin-bottom: 16px;
 }
 
-/* Refresh spin button */
+/* Refresh spin animation */
 .is-spinning {
-  animation: wi-spin 700ms cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  display: inline-block;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: refresh-spin 750ms cubic-bezier(0.2, 0.8, 0.2, 1) 1;
+}
+
+@keyframes refresh-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Centered Micro-interaction Toast Banner */
+.toast-banner {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  pointer-events: none;
+  animation: toast-center-rise 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  white-space: nowrap;
+}
+
+@keyframes toast-center-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 18px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
 }
 
 /* Responsive helpers */
@@ -2164,20 +2244,4 @@ html.vt-theme::view-transition-new(root) {
     flex-direction: row;
     text-align: left;
   }
-}
-
-.footer-source-links {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.footer-link {
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: color 150ms ease;
-}
-
-.footer-link:hover {
-  color: var(--accent-blue);
 }

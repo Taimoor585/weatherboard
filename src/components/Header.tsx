@@ -39,7 +39,6 @@ export const Header: React.FC<Props> = ({
             </div>
             <div className="brand-title-wrap">
               <span className="brand-title">WeatherBoard</span>
-              <span className="brand-badge">PWA</span>
             </div>
           </a>
 
@@ -47,12 +46,12 @@ export const Header: React.FC<Props> = ({
             {canInstall && (
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary header-action-btn"
                 onClick={onInstall}
                 title="Install WeatherBoard as standalone app"
                 aria-label="Install app"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
@@ -63,15 +62,15 @@ export const Header: React.FC<Props> = ({
 
             <button
               type="button"
-              className={`btn btn-icon btn-ghost ${refreshing ? 'is-refreshing' : ''}`}
+              className={`btn btn-icon btn-ghost header-action-btn ${refreshing ? 'is-refreshing' : ''}`}
               onClick={onRefresh}
               disabled={refreshing}
               aria-label="Refresh weather data"
               title="Refresh weather data"
             >
               <svg
-                width="18"
-                height="18"
+                width="17"
+                height="17"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -89,13 +88,13 @@ export const Header: React.FC<Props> = ({
 
             <button
               type="button"
-              className="btn btn-icon btn-ghost"
+              className="btn btn-icon btn-ghost header-action-btn"
               onClick={onOpenNotifications}
               aria-label="Morning weather reminder settings"
               title="Morning weather reminder settings"
               style={{ position: 'relative' }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                 <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
               </svg>
@@ -103,10 +102,10 @@ export const Header: React.FC<Props> = ({
                 <span
                   style={{
                     position: 'absolute',
-                    top: '9px',
-                    right: '9px',
-                    width: '8px',
-                    height: '8px',
+                    top: '8px',
+                    right: '8px',
+                    width: '7px',
+                    height: '7px',
                     borderRadius: '50%',
                     backgroundColor: '#10b981',
                     boxShadow: '0 0 0 2px var(--surface-base)',
@@ -118,24 +117,24 @@ export const Header: React.FC<Props> = ({
 
             <button
               type="button"
-              className="btn btn-ghost"
+              className="btn btn-ghost header-action-btn"
               onClick={onToggleUnits}
               aria-label={`Switch to ${units === 'metric' ? 'Fahrenheit' : 'Celsius'}`}
               title="Toggle temperature unit"
-              style={{ padding: '0 10px', minWidth: '44px', fontWeight: 600, fontFamily: 'var(--font-mono)' }}
+              style={{ padding: '0 8px', minWidth: '38px', fontWeight: 700, fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}
             >
               {units === 'metric' ? '°C' : '°F'}
             </button>
 
             <button
               type="button"
-              className="btn btn-icon btn-ghost"
+              className="btn btn-icon btn-ghost header-action-btn"
               onClick={onToggleTheme}
               aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
               {theme === 'dark' ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffd49a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffd49a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="4" />
                   <path d="M12 2v2" />
                   <path d="M12 20v2" />
@@ -147,7 +146,7 @@ export const Header: React.FC<Props> = ({
                   <path d="m19.07 4.93-1.41 1.41" />
                 </svg>
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
                 </svg>
               )}

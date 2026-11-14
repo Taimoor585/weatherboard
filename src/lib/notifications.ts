@@ -151,7 +151,21 @@ export async function disarmReminder() {
 /** Asks the service worker to fetch fresh weather and show the reminder right now. */
 export async function sendTestNotification(): Promise<boolean> {
   const reg = await registration();
-  if (!reg?.active) return false;
-  reg.active.postMessage({ type: 'reminder:show', test: true });
-  return true;
+  if (reg?.active) {
+    reg.active.postMessage({ type: 'reminder:show', test: true });
+    return true;
+  }
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    try {
+      new Notification('WeatherBoard Morning Reminder', {
+        body: 'Today: 22°C · Partly Cloudy. 0% chance of rain.',
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+      });
+      return true;
+    } catch {
+      /* ignore */
+    }
+  }
+  return false;
 }

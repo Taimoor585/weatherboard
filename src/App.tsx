@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import Lenis from 'lenis';
+import React, { useMemo, useState } from 'react';
 import { AtmosphericLoader } from './components/AtmosphericLoader';
 import { CitySearch } from './components/CitySearch';
 import { CurrentWeatherCard } from './components/CurrentWeatherCard';
@@ -50,6 +49,7 @@ export const App: React.FC = () => {
 
   // Weather query hook
   const { status, data, error, fromCache, refreshing, refresh, retry } = useWeather(city, online);
+  const [manualRefreshing, setManualRefreshing] = useState(false);
 
   // Selected Day Index for 5-Day & Hourly Interactive Link
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
@@ -62,32 +62,9 @@ export const App: React.FC = () => {
   const [reminderActive, setReminderActive] = useState(() => readReminder().enabled);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Reset selected day index when city changes
-  useEffect(() => {
-    setSelectedDayIndex(0);
-  }, [city?.id]);
-
-  // Smooth butter scroll via Lenis
-  useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-    });
-    function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-    const rafId = requestAnimationFrame(raf);
-    return () => {
-      cancelAnimationFrame(rafId);
-      lenis.destroy();
-    };
-  }, []);
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 2800);
   };
 
   const handleToggleFavourite = (targetCity: City) => {
@@ -107,8 +84,13 @@ export const App: React.FC = () => {
   };
 
   const handleManualRefresh = () => {
-    showToast('Updating atmospheric & satellite telemetry...');
+    if (manualRefreshing) return;
+    setManualRefreshing(true);
+    showToast('Telemetry updated');
     refresh();
+    setTimeout(() => {
+      setManualRefreshing(false);
+    }, 850);
   };
 
   // Derive hourly slice for the selected day
@@ -145,7 +127,7 @@ export const App: React.FC = () => {
           units={units}
           onToggleUnits={toggleUnits}
           onRefresh={handleManualRefresh}
-          refreshing={refreshing}
+          refreshing={manualRefreshing || refreshing}
           onOpenNotifications={() => setNotifOpen(true)}
           reminderEnabled={reminderActive}
           canInstall={canInstall}
@@ -154,13 +136,22 @@ export const App: React.FC = () => {
 
         <main className="container" role="main">
           {/* City Autocomplete Search Bar */}
-          <CitySearch onSelectCity={(c) => setCity(c)} currentCity={city} />
+          <CitySearch
+            onSelectCity={(c) => {
+              setSelectedDayIndex(0);
+              setCity(c);
+            }}
+            currentCity={city}
+          />
 
           {/* Favourites Quick-Access Bar */}
           <FavouriteCities
             favourites={favourites}
             currentCity={city}
-            onSelectCity={(c) => setCity(c)}
+            onSelectCity={(c) => {
+              setSelectedDayIndex(0);
+              setCity(c);
+            }}
             onRemoveCity={removeFav}
             persistent={persistent}
           />
@@ -233,22 +224,11 @@ export const App: React.FC = () => {
         <footer className="footer">
           <div className="container">
             <div className="footer-inner">
-              <div>
-                <strong>WeatherBoard</strong> · Precision personal forecast dashboard · Built for Edspire
+              <div style={{ fontWeight: 500, letterSpacing: '-0.01em' }}>
+                WeatherBoard · Precision Meteorological Telemetry · Continuous Localized Forecasting
               </div>
-              <div className="footer-source-links">
-                <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Powered by</span>
-                <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer" className="footer-link">
-                  Open-Meteo
-                </a>
-                <span>·</span>
-                <a href="https://openweathermap.org/" target="_blank" rel="noopener noreferrer" className="footer-link">
-                  OpenWeatherMap
-                </a>
-                <span>·</span>
-                <a href="https://rapidapi.com/wirefreethought/api/geodb-cities" target="_blank" rel="noopener noreferrer" className="footer-link">
-                  GeoDB Cities
-                </a>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.785rem' }}>
+                All systems nominal
               </div>
             </div>
           </div>
@@ -261,33 +241,12 @@ export const App: React.FC = () => {
           onReminderChange={(en) => setReminderActive(en)}
         />
 
-        {/* Micro-interaction Toast Banner */}
+        {/* Centered Micro-interaction Toast Banner */}
         {toastMessage && (
-          <div
-            style={{
-              position: 'fixed',
-              bottom: '24px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'var(--surface-elevated)',
-              color: 'var(--text-primary)',
-              backdropFilter: 'var(--glass-blur)',
-              WebkitBackdropFilter: 'var(--glass-blur)',
-              border: '1px solid var(--border-strong)',
-              borderRadius: 'var(--radius-full)',
-              padding: '10px 20px',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              boxShadow: 'var(--shadow-lg)',
-              zIndex: 90,
-              animation: 'dropdown-pop 200ms var(--ease-out)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-            role="status"
-            aria-live="polite"
-          >
+          <div className="toast-banner" role="status" aria-live="polite">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-blue)' }}>
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
             <span>{toastMessage}</span>
           </div>
         )}
